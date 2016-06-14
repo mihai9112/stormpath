@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/mihai9112/stormpath#readme",
   "dependencies": {
+    "async": "^2.0.0-rc.6",
     "express": "^4.13.4",
     "express-stormpath": "^3.1.2"
   }
