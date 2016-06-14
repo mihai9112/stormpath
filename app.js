@@ -1,5 +1,6 @@
 var express = require('express');
 var stormpath = require('express-stormpath');
+const https = require('https');
 var config = require('./config/apiKey.json')
 var app = express();
 var https = require('https');
@@ -47,7 +48,7 @@ app.get('/createKey', stormpath.loginRequired, function (req, res) {
    });
 });
 
-app.get('/speedTests', function (req, response) {
+app.get('/speedTests', function (request, response) {
     var jsonObject = JSON.stringify({
       "time_from":"2015-03",
       "time_to":"2015-04",
@@ -59,7 +60,6 @@ app.get('/speedTests', function (req, response) {
       'Content-Type' : 'application/json',
       'Content-Length' : Buffer.byteLength(jsonObject, 'utf8')
     };
-
     var optionsPostList = [];
 
     for(var i = 0; i < 1; i++)
@@ -101,4 +101,5 @@ app.get('/speedTests', function (req, response) {
       });  
     });
 });
+
 app.listen(3000);
