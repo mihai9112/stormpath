@@ -1,9 +1,8 @@
 var express = require('express');
 var stormpath = require('express-stormpath');
 const https = require('https');
-var config = require('./config/apiKey.json')
+var config = require('./config/apiKey.json');
 var app = express();
-var https = require('https');
 var async = require('async');
 
 app.use(stormpath.init(app, {
@@ -48,7 +47,7 @@ app.get('/createKey', stormpath.loginRequired, function (req, res) {
    });
 });
 
-app.get('/speedTests', function (request, response) {
+app.get('/speedTests', stormpath.loginRequired, function (request, response) {
     var jsonObject = JSON.stringify({
       "time_from":"2015-03",
       "time_to":"2015-04",
@@ -61,15 +60,16 @@ app.get('/speedTests', function (request, response) {
       'Content-Length' : Buffer.byteLength(jsonObject, 'utf8')
     };
     var optionsPostList = [];
+    var resultsParrallel = [];
 
-    for(var i = 0; i < 1; i++)
+    for(var i = 0; i < 10; i++)
     {
       var optionspost = {
         host : 'api.datashaka.com',
         port : 443,
-        path : '/v1.0/retrieve.json?token=yourToken=Airlines&profile=on',
-        method: 'POST',
-        index: i,
+        path : '/v1.0/retrieve.json?token=yourToken&groupspace=Airlines&profile=on',
+        method : 'POST',
+        index : i,
         headers : postheaders
       };
 
@@ -80,17 +80,46 @@ app.get('/speedTests', function (request, response) {
     console.info(optionspost);
     console.info('Do the POST call');
 
-    async.map(optionsPostList, function (option) {
+    async.each(optionsPostList, function (option,done) {
       var reqPost = https.request(option, function (res) {
         console.log('statusCode: ' + res.statusCode);
         console.log('index: ' + option.index);
         res.on('data', function (data) {
           var body = JSON.parse(data);
 
+          var queryTotal = "";
+          var tractorTotal = "";
           console.info('POST result:\n');
-          console.log(body);
-          console.log(body[20]);
+
+          for(var i = 0; i < body.length; i++)
+          {
+            if(body[i].context.Event === "Query - Total" && body[i].signal === "Duration"){
+              queryTotal = "Query total: " +  body[i].value;
+            }
+
+            if(body[i].context.Event === "Tractor" && body[i].signal === "Duration"){
+              tractorTotal = "Tractor total: " + body[i].value;
+            }
+
+            if(queryTotal !== "" && tractorTotal !== ""){
+              var result = {
+                index : option.index,
+                qTotal : queryTotal,
+                tTotal : tractorTotal
+              }
+              resultsParrallel.push(result);
+              console.log("Array length: " + resultsParrallel.length);
+              queryTotal = "";
+              tractorTotal = "";
+            }
+          }
           console.info('\n\nPOST completed');
+        });
+
+        res.on('end', function () {
+          var me = JSON.stringify(resultsParrallel);
+          console.log(me);
+          done();
         });
       });
 
@@ -98,7 +127,9 @@ app.get('/speedTests', function (request, response) {
       reqPost.end();
       reqPost.on('error', function (e) {
           console.error(e);
-      });  
+      });
+    }, function(err){
+      response.send(JSON.stringify(resultsParrallel));
     });
 });
 
