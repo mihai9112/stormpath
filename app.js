@@ -24,7 +24,7 @@ app.use(stormpath.init(app, {
 }));
  
 app.on('stormpath.ready', function () {
-  console.log('Stormpath Ready');
+  //console.log('Stormpath Ready');
 });
 
 app.get('/dashboard', stormpath.loginRequired, function(req, res) {
