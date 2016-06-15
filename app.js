@@ -67,7 +67,7 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       var optionspost = {
         host : 'api.datashaka.com',
         port : 443,
-        path : '/v1.0/retrieve.json?token=yourToken&groupspace=Airlines&profile=on',
+        path : '/v1.0/retrieve.json?token=yourtoken&groupspace=Airlines&profile=on',
         method : 'POST',
         index : i,
         headers : postheaders
@@ -76,49 +76,53 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       optionsPostList.push(optionspost);
     }
 
-    console.info('Options prepared:');
-    console.info(optionspost);
-    console.info('Do the POST call');
+    // console.info('Options prepared:');
+    // console.info(optionspost);
+    // console.info('Do the POST call');
 
-    async.each(optionsPostList, function (option,done) {
+    async.each(optionsPostList, function (option, done) {
+      var start = new Date().getTime();
+      console.time("query");
       var reqPost = https.request(option, function (res) {
-        console.log('statusCode: ' + res.statusCode);
+        // console.log('statusCode: ' + res.statusCode);
         console.log('index: ' + option.index);
         res.on('data', function (data) {
           var body = JSON.parse(data);
 
-          var queryTotal = "";
-          var tractorTotal = "";
-          console.info('POST result:\n');
+          var queryTotal = -1;
+          var tractorTotal = -1;
+          //console.info('POST result:\n');
 
           for(var i = 0; i < body.length; i++)
           {
             if(body[i].context.Event === "Query - Total" && body[i].signal === "Duration"){
-              queryTotal = "Query total: " +  body[i].value;
+              queryTotal = body[i].value;
             }
 
             if(body[i].context.Event === "Tractor" && body[i].signal === "Duration"){
-              tractorTotal = "Tractor total: " + body[i].value;
+              tractorTotal = body[i].value;
             }
 
-            if(queryTotal !== "" && tractorTotal !== ""){
+            if(queryTotal >= 0 && tractorTotal >= 0){
               var result = {
                 index : option.index,
                 qTotal : queryTotal,
-                tTotal : tractorTotal
+                tTotal : tractorTotal,
+                total : 0
               }
               resultsParrallel.push(result);
-              console.log("Array length: " + resultsParrallel.length);
-              queryTotal = "";
-              tractorTotal = "";
+              //console.log("Array length: " + resultsParrallel.length);
+              queryTotal = -1;
+              tractorTotal = -1;
             }
           }
-          console.info('\n\nPOST completed');
+          //console.info('\n\nPOST completed');
         });
 
         res.on('end', function () {
-          var me = JSON.stringify(resultsParrallel);
-          console.log(me);
+          var end = new Date().getTime();
+          resultsParrallel[resultsParrallel.length - 1].total = end - start;
+          console.timeEnd("query");
           done();
         });
       });
@@ -129,7 +133,21 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
           console.error(e);
       });
     }, function(err){
-      response.send(JSON.stringify(resultsParrallel));
+      if(!err){
+        var outputString = "";
+        for(var i = 0; i < resultsParrallel.length; i++){
+            var contention = resultsParrallel[i].total - (resultsParrallel[i].qTotal + resultsParrallel[i].tTotal);
+            outputString += "Call index: " + resultsParrallel[i].index + "</br> Query total: " 
+                          + resultsParrallel[i].qTotal + "ms </br> Tractor total: " 
+                          + resultsParrallel[i].tTotal + "ms </br> Total: " 
+                          + resultsParrallel[i].total + "ms </br> Contention: " 
+                          + contention + "ms </br></br>";
+        }
+        response.send(outputString);
+      }
+      else{
+        response.send("Something went wrong");
+      }
     });
 });
 
