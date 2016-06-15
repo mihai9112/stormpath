@@ -83,10 +83,10 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
     async.each(optionsPostList, function (option, done) {
       var start = new Date().getTime();
-      console.time("query");
+      //console.time("query");
       var reqPost = https.request(option, function (res) {
         // console.log('statusCode: ' + res.statusCode);
-        console.log('index: ' + option.index);
+        //console.log('index: ' + option.index);
         res.on('data', function (data) {
           var body = JSON.parse(data);
 
@@ -123,7 +123,7 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
         res.on('end', function () {
           var end = new Date().getTime();
           resultsParrallel[resultsParrallel.length - 1].total = end - start;
-          console.timeEnd("query");
+          //console.timeEnd("query");
           done();
         });
       });
