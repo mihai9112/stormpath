@@ -5,6 +5,7 @@ var config = require('./config/apiKey.json');
 var app = express();
 var async = require('async');
 
+app.set('view engine', 'ejs');
 app.use(stormpath.init(app, {
   client: {
     apiKey: {
@@ -67,7 +68,7 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       var optionspost = {
         host : 'api.datashaka.com',
         port : 443,
-        path : '/v1.0/retrieve.json?token=yourtoken&groupspace=Airlines&profile=on',
+        path : '/v1.0/retrieve.json?token='+ config.token +'&groupspace=Airlines&profile=on',
         method : 'POST',
         index : i,
         headers : postheaders
@@ -134,16 +135,9 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       });
     }, function(err){
       if(!err){
-        var outputString = "";
-        for(var i = 0; i < resultsParrallel.length; i++){
-            var contention = resultsParrallel[i].total - (resultsParrallel[i].qTotal + resultsParrallel[i].tTotal);
-            outputString += "Call index: " + resultsParrallel[i].index + "</br> Query total: " 
-                          + resultsParrallel[i].qTotal + "ms </br> Tractor total: " 
-                          + resultsParrallel[i].tTotal + "ms </br> Total: " 
-                          + resultsParrallel[i].total + "ms </br> Contention: " 
-                          + contention + "ms </br></br>";
-        }
-        response.send(outputString);
+        response.render('pages/tests', {
+          renderThisResults : resultsParrallel
+        });
       }
       else{
         response.send("Something went wrong");
