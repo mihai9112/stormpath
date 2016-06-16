@@ -1,6 +1,10 @@
 <html lang="en">
 <head>
 <style>
+    .floatedTable {
+        float: left;
+    }
+
     table, th, td {
         border: 1px solid black;
         border-collapse: collapse;
@@ -12,16 +16,18 @@
 </style>
 </head>
 <body>
-    <table>
+    <table class="floatedTable">
         <tr>
+            <th>Module</th>
             <th>Call index</th>
             <th>Query total</th>
             <th>Tractor total</th>
-            <th>Contention</th>
+            <th>Untracked</th>
             <th>Total</th>
         </tr>
-        <% renderThisResults.forEach(function(result) { %>
+        <% renderTheseResults.forEach(function(result) { %>
             <tr>
+                <td><%= result.module %></td>
                 <td><%= result.index %></td>
                 <td><%= result.qTotal %>ms</td>
                 <td><%= result.tTotal %>ms</td>
@@ -29,6 +35,28 @@
                 <td><%= result.total %>ms</td>
             </tr>
         <% }); %>
+    </table>
+    <table class="floatedTable">
+        <tr>
+            <th>Min</th>
+            <th>Max</th>
+            <th>Average</th>
+            <th>Metric</th>
+            <th>Brand</th>
+            <th>Groupspace</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+        </tr>
+        <tr>
+            <td><%= min %>ms</td>
+            <td><%= max %>ms</td>
+            <td><%= average %>ms</td>
+            <td><%= metric %></td>
+            <td><%= brand %></td>
+            <td><%= groupspace %></td>
+            <td><%= startDate %></td>
+            <td><%= endDate %></td>
+        </tr>
     </table>
 </body>
 </html>
