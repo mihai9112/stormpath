@@ -84,12 +84,14 @@
             <td><%= totalAverage %>ms</td>
         </tr>
         <tr>
-            <th>Untracked Average</th>
+            <th></th>
             <th>% of Untracked</th>
+            <th>Untracked Average</th>
         </tr>
         <tr>
-            <td><%= untrackedAverage %>ms</td>
+            <td></td>
             <td><%= ((untrackedAverage / totalAverage) * 100) %></td>
+            <td><%= untrackedAverage %>ms</td>
         </tr>
     </table>
 </body>
