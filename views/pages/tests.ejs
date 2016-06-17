@@ -16,6 +16,22 @@
 </style>
 </head>
 <body>
+    <table>
+        <tr>
+            <th>Metric</th>
+            <th>Brand</th>
+            <th>Groupspace</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+        </tr>
+        <tr>
+            <td><%= metric %></td>
+            <td><%= brand %></td>
+            <td><%= groupspace %></td>
+            <td><%= startDate %></td>
+            <td><%= endDate %></td>
+        </tr>
+    </table>
     <table class="floatedTable">
         <tr>
             <th>Module</th>
@@ -31,31 +47,49 @@
                 <td><%= result.index %></td>
                 <td><%= result.qTotal %>ms</td>
                 <td><%= result.tTotal %>ms</td>
-                <td><%= result.total - (result.qTotal + result.tTotal) %>ms</td>
+                <td><%= result.untracked %>ms</td>
                 <td><%= result.total %>ms</td>
             </tr>
         <% }); %>
     </table>
     <table class="floatedTable">
         <tr>
-            <th>Min</th>
-            <th>Max</th>
-            <th>Average</th>
-            <th>Metric</th>
-            <th>Brand</th>
-            <th>Groupspace</th>
-            <th>Start Date</th>
-            <th>End Date</th>
+            <th>Query Min</th>
+            <th>Query Max</th>
+            <th>Query Average</th>
         </tr>
         <tr>
-            <td><%= min %>ms</td>
-            <td><%= max %>ms</td>
-            <td><%= average %>ms</td>
-            <td><%= metric %></td>
-            <td><%= brand %></td>
-            <td><%= groupspace %></td>
-            <td><%= startDate %></td>
-            <td><%= endDate %></td>
+            <td><%= queryMin %>ms</td>
+            <td><%= queryMax %>ms</td>
+            <td><%= queryAverage %>ms</td>
+        </tr>
+        <tr>
+            <th>Tractor Min</th>
+            <th>Tractor Max</th>
+            <th>Tractor Average</th>
+        </tr>
+        <tr>
+            <td><%= tractorMin %>ms</td>
+            <td><%= tractorMax %>ms</td>
+            <td><%= tractorAverage %>ms</td>
+        </tr>
+        <tr>
+            <th>Total Min</th>
+            <th>Total Max</th>
+            <th>Total Average</th>
+        </tr>
+        <tr>
+            <td><%= totalMin %>ms</td>
+            <td><%= totalMax %>ms</td>
+            <td><%= totalAverage %>ms</td>
+        </tr>
+        <tr>
+            <th>Untracked Average</th>
+            <th>% of Untracked</th>
+        </tr>
+        <tr>
+            <td><%= untrackedAverage %>ms</td>
+            <td><%= ((untrackedAverage / totalAverage) * 100) %></td>
         </tr>
     </table>
 </body>

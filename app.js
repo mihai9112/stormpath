@@ -120,7 +120,8 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
                   qTotal : queryTotal,
                   tTotal : tractorTotal,
                   total : 0,
-                  module : mod
+                  module : mod,
+                  untracked : 0
                 }
                 resultsParrallel.push(result);
                 //console.log("Array length: " + resultsParrallel.length);
@@ -133,7 +134,9 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
           res.on('end', function () {
             var end = new Date().getTime();
-            resultsParrallel[resultsParrallel.length - 1].total = end - start;
+            var lastResult = resultsParrallel[resultsParrallel.length - 1];
+            lastResult.total = end - start;
+            lastResult.untracked = lastResult.total - (lastResult.qTotal + lastResult.tTotal);
             //console.timeEnd("query");
             done();
           });
@@ -156,9 +159,16 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
         if(!err){
           response.render('pages/tests', {
             renderTheseResults : resultsParrallel,
-            max : getValues(resultsParrallel, 'total').max(),
-            min : getValues(resultsParrallel, 'total').min(),
-            average : getValues(resultsParrallel, 'total').average(),
+            totalMin : getValues(resultsParrallel, 'total').min(),
+            totalMax : getValues(resultsParrallel, 'total').max(),
+            totalAverage : getValues(resultsParrallel, 'total').average(),
+            queryMin : getValues(resultsParrallel, 'qTotal').min(),
+            queryMax : getValues(resultsParrallel, 'qTotal').max(),
+            queryAverage: getValues(resultsParrallel, 'qTotal').average(),
+            tractorMin : getValues(resultsParrallel, 'tTotal').min(),
+            tractorMax : getValues(resultsParrallel, 'tTotal').max(),
+            tractorAverage : getValues(resultsParrallel, 'tTotal').average(),
+            untrackedAverage : getValues(resultsParrallel, 'untracked').average(),
             brand : brand,
             metric : metric,
             groupspace : groupspace,
