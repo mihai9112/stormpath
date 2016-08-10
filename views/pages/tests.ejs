@@ -41,6 +41,7 @@
             <th>Gateway + Deserialise</th>
             <th>Untracked</th>
             <th>Total</th>
+            <th>Calculated over following instances</th>
         </tr>
         <% renderTheseResults.forEach(function(result) { %>
             <tr>
@@ -51,6 +52,7 @@
                 <td><%= result.infraTotal %>ms</td>
                 <td><%= result.untracked %>ms</td>
                 <td><%= result.total %>ms</td>
+                <td><%= result.inst %></td>
             </tr>
         <% }); %>
     </table>

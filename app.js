@@ -152,7 +152,7 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
               if(body[i].context['Actor Name'])
               {
-                  instance += "; " + body[i].context.Instance;
+                  instance += body[i].context.Instance + "; ";
               }
 
               if(computeTotal >= 0 || cacheTotal >= 0 || infrastructureTotal >= 0){
@@ -180,8 +180,6 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
                 clusterCallInfra += resultsParrallel[i].infraTotal;
             }
 
-            console.log("Real Gateway + Deserialisation: " + clusterCallInfra);
-            console.log("Instances: " + instance);
             var clusterResult = {
                 index : option.index,
                 compTotal : clusterCallComp,
@@ -189,7 +187,8 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
                 infraTotal : clusterCallInfra,
                 total : 0,
                 module : mod,
-                untracked : 0
+                untracked : 0,
+                inst : instance
             }
 
             clusterResults.push(clusterResult);
