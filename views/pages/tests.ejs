@@ -5,6 +5,11 @@
         float: left;
     }
 
+    .over {
+        color:  red;
+        font-weight: bold;
+    }
+
     table, th, td {
         border: 1px solid black;
         border-collapse: collapse;
@@ -36,9 +41,10 @@
         <tr>
             <th>Module</th>
             <th>Call index</th>
+            <th>Max of <br/> KatsuFilteredQueryActor</th>
+            <th>Max of <br/> KatsuTractoredFilteredQueryActor</th>
             <th>Max of <br/> KatsuSingleFilteredQueryActor</th>
             <th>Max of <br/> KatsuTractorActor</th>
-            <th>Max of <br/> KatsuTractoredFilteredQueryActor</th>
             <th>Cache total</th>
             <th>Gateway + Deserialise</th>
             <th>Untracked</th>
@@ -49,11 +55,12 @@
             <tr>
                 <td><%= result.module %></td>
                 <td><%= result.index %></td>
-                <td><%= result.singleFilteredQueryActorMax %>ms</td>
-                <td><%= result.tractorActorMax %>ms</td>
-                <td><%= result.tractoredFilteredQueryActorMax %>ms</td>
+                <td class=<% if(result.filteredQueryActorMax > 0) { %> over <% } %>><%= result.filteredQueryActorMax %>ms</td>
+                <td class=<% if(result.tractoredFilteredQueryActorMax > 0) { %> over <% } %>><%= result.tractoredFilteredQueryActorMax %>ms</td>
+                <td class=<% if(result.singleFilteredQueryActorMax > 0) { %> over <% } %>><%= result.singleFilteredQueryActorMax %>ms</td>
+                <td class=<% if(result.tractorActorMax > 0) { %> over <% } %>><%= result.tractorActorMax %>ms</td>
                 <td><%= result.cachTotal %>ms</td>
-                <td><%= result.infraTotal %>ms</td>
+                <td class=<% if(result.infraTotal > 0) { %> over <% } %>><%= result.infraTotal %>ms</td>
                 <td><%= result.untracked %>ms</td>
                 <td><%= result.total %>ms</td>
                 <td><%= result.inst %></td>

@@ -112,6 +112,7 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
             var computeOfKatsuSingleFilteredQueryActor = [];
             var computeOfKatsuTractorActor = [];
             var computeOfKatsuTractoredFilteredQueryActor = [];
+            var computeOfKatsuFilteredQueryActor = [];
             var body = JSON.parse(data);
             var instance = "";
 
@@ -144,6 +145,10 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
               if(body[i].context['Actor Name']){
                   instance += body[i].context.Instance + "; ";
+              }
+
+              if(body[i].context['Actor Name'] === "KatsuFilteredQueryActor"){
+                  computeOfKatsuFilteredQueryActor.push(value);
               }
 
               if(body[i].context['Actor Name'] === "KatsuTractoredFilteredQueryActor"){
@@ -184,6 +189,7 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
             var clusterResult = {
                 index : option.index,
+                filteredQueryActorMax : (computeOfKatsuFilteredQueryActor.length > 0) ? computeOfKatsuFilteredQueryActor.max() : 0,
                 singleFilteredQueryActorMax :  (computeOfKatsuSingleFilteredQueryActor.length > 0 ) ? computeOfKatsuSingleFilteredQueryActor.max() : 0,
                 tractorActorMax : (computeOfKatsuTractorActor.length > 0) ? computeOfKatsuTractorActor.max() : 0,
                 tractoredFilteredQueryActorMax : (computeOfKatsuTractoredFilteredQueryActor.length > 0) ? computeOfKatsuTractoredFilteredQueryActor.max() : 0,
