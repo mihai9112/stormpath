@@ -55,18 +55,17 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
     var timeTo = request.param('time_to');
     var noOfModules = request.param('modules');
     var parrallelCalls = request.param('calls');
+    var metric = request.param('metric');
+    var brands = request.param('brands');
+    var country = request.param('country');
+    var subgroup = request.param('subgroup');
+    var groupspace = request.param('groupspace');
 
-
-    var metric = "Participation - always participating with the brand";
-    var brands = ["Air France (Short Haul)", "British Airways (Short Haul)","Iberia (Short Haul)","KLM (Short Haul)","Lufthansa (Short Haul)","Monarch (Short Haul)",
-                 "Norwegian (Short Haul)","Ryanair (Short Haul)","SAS Scandinavian Airlines (Short Haul)","Vueling (Short Haul)","easyJet (Short Haul)", "flybe (Short Haul)", "Aer Lingus (Short Haul)"];
-    var country = "UK";
-    var subgroup = "Total Sample";
-    var groupspace = "Airlines";
+    var listOfBrands = brands.split(';');
     var dates = [[timeFrom, timeTo]];
     var constructedBrands = "";
 
-    brands.forEach(function(element) {
+    listOfBrands.forEach(function(element) {
       constructedBrands += "[Brand:"+ element +"]"
     }, this);
 
