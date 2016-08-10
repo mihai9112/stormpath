@@ -51,18 +51,8 @@ app.get('/createKey', stormpath.loginRequired, function (req, res) {
 
 app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
-    var timeFrom = request.param('time_from');
-    var timeTo = request.param('time_to');
-    var noOfModules = request.param('modules');
-    var parrallelCalls = request.param('calls');
-    var metric = request.param('metric');
-    var brands = request.param('brands');
-    var country = request.param('country');
-    var subgroup = request.param('subgroup');
-    var groupspace = request.param('groupspace');
-
-    var listOfBrands = brands.split(';');
-    var dates = [[timeFrom, timeTo]];
+    var listOfBrands = request.query.brands.split(';');
+    var dates = [[request.query.time_from, request.query.time_to]];
     var constructedBrands = "";
 
     listOfBrands.forEach(function(element) {
@@ -73,7 +63,7 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       "time_from": dates[0][0],
       "time_to": dates[0][1],
       "signal": "{Effective Base}{N Weighted}{Unweighted Base}{Weighted Base}",
-      "context": "[Country:"+ country +"]"+ constructedBrands +"[Metric:" + metric + "][Subgroup:" + subgroup +"]"
+      "context": "[Country:"+ request.query.country +"]"+ constructedBrands +"[Metric:" + request.query.metric + "][Subgroup:" + request.query.subgroup +"]"
     });
 
     var postheaders = {
@@ -85,17 +75,17 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
     var modules = [];
     var clusterResults = [];
 
-    for(var i = 0; i < noOfModules; i++)
+    for(var i = 0; i < request.query.modules; i++)
     {
         modules.push(i);
     }
     
-    for(var i = 0; i < parrallelCalls; i++)
+    for(var i = 0; i < request.query.calls; i++)
     {
       var optionspost = {
         host : 'api.datashaka.com',
         port : 443,
-        path : '/v1.0/retrieve.json?token='+ config.token +'&groupspace='+ groupspace +'&profile=on',
+        path : '/v1.0/retrieve.json?token='+ config.token +'&groupspace='+ request.query.groupspace +'&profile=on',
         method : 'POST',
         index : i,
         headers : postheaders
@@ -119,6 +109,9 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
           res.on('data', function (data) {
             var end = new Date().getTime();
             var resultsParrallel = [];
+            var computeOfKatsuSingleFilteredQueryActor = [];
+            var computeOfKatsuTractorActor = [];
+            var computeOfKatsuTractoredFilteredQueryActor = [];
             var body = JSON.parse(data);
             var instance = "";
 
@@ -149,9 +142,21 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
                 cacheTotal = value;
               }
 
-              if(body[i].context['Actor Name'])
-              {
+              if(body[i].context['Actor Name']){
                   instance += body[i].context.Instance + "; ";
+              }
+
+              if(body[i].context['Actor Name'] === "KatsuTractoredFilteredQueryActor"){
+                  computeOfKatsuTractoredFilteredQueryActor.push(value);
+              }
+
+              var actorName = body[i].context['Actor Name']; 
+              if(body[i].context['Actor Name'] === "KatsuSingleFilteredQueryActor"){
+                  computeOfKatsuSingleFilteredQueryActor.push(value);
+              }
+
+              if(body[i].context['Actor Name'] === "KatsuTractorActor"){
+                  computeOfKatsuTractorActor.push(value);
               }
 
               if(computeTotal >= 0 || cacheTotal >= 0 || infrastructureTotal >= 0){
@@ -168,20 +173,20 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
               }
             }
             
-            var clusterCallComp = 0;
             var clusterCallCach = 0;
             var clusterCallInfra = 0;
 
             for(var i = 0; i < resultsParrallel.length; i++)
             {
-                clusterCallComp += resultsParrallel[i].compTotal;
                 clusterCallCach += resultsParrallel[i].cachTotal;
                 clusterCallInfra += resultsParrallel[i].infraTotal;
             }
 
             var clusterResult = {
                 index : option.index,
-                compTotal : clusterCallComp,
+                singleFilteredQueryActorMax :  (computeOfKatsuSingleFilteredQueryActor.length > 0 ) ? computeOfKatsuSingleFilteredQueryActor.max() : 0,
+                tractorActorMax : (computeOfKatsuTractorActor.length > 0) ? computeOfKatsuTractorActor.max() : 0,
+                tractoredFilteredQueryActorMax : (computeOfKatsuTractoredFilteredQueryActor.length > 0) ? computeOfKatsuTractoredFilteredQueryActor.max() : 0,
                 cachTotal : clusterCallCach,
                 infraTotal : clusterCallInfra,
                 total : 0,
@@ -236,8 +241,8 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
             infraAverage : getValues(clusterResults, 'infraTotal').average(),
             untrackedAverage : getValues(clusterResults, 'untracked').average(),
             brand : constructedBrands,
-            metric : metric,
-            groupspace : groupspace,
+            metric : request.query.metric,
+            groupspace : request.query.groupspace,
             startDate : dates[0][0],
             endDate : dates[0][1] 
           });

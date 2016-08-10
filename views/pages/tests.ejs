@@ -36,7 +36,9 @@
         <tr>
             <th>Module</th>
             <th>Call index</th>
-            <th>Compute total</th>
+            <th>Max of <br/> KatsuSingleFilteredQueryActor</th>
+            <th>Max of <br/> KatsuTractorActor</th>
+            <th>Max of <br/> KatsuTractoredFilteredQueryActor</th>
             <th>Cache total</th>
             <th>Gateway + Deserialise</th>
             <th>Untracked</th>
@@ -47,7 +49,9 @@
             <tr>
                 <td><%= result.module %></td>
                 <td><%= result.index %></td>
-                <td><%= result.compTotal %>ms</td>
+                <td><%= result.singleFilteredQueryActorMax %>ms</td>
+                <td><%= result.tractorActorMax %>ms</td>
+                <td><%= result.tractoredFilteredQueryActorMax %>ms</td>
                 <td><%= result.cachTotal %>ms</td>
                 <td><%= result.infraTotal %>ms</td>
                 <td><%= result.untracked %>ms</td>
