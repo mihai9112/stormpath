@@ -225,20 +225,21 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       });
     },function (err) {
         if(!err){
+          var total = getValues(clusterResults, 'total');
+          var cache = getValues(clusterResults, 'cachTotal');
+          var infra = getValues(clusterResults, 'infraTotal');
+
           response.render('pages/tests', {
             renderTheseResults : clusterResults,
-            totalMin : getValues(clusterResults, 'total').min(),
-            totalMax : getValues(clusterResults, 'total').max(),
-            totalAverage : getValues(clusterResults, 'total').average(),
-            compMin : getValues(clusterResults, 'compTotal').min(),
-            compMax : getValues(clusterResults, 'compTotal').max(),
-            compAverage: getValues(clusterResults, 'compTotal').average(),
-            cachMin : getValues(clusterResults, 'cachTotal').min(),
-            cachMax : getValues(clusterResults, 'cachTotal').max(),
-            cachAverage : getValues(clusterResults, 'cachTotal').average(),
-            infraMin : getValues(clusterResults, 'infraTotal').min(),
-            infraMax : getValues(clusterResults, 'infraTotal').max(),
-            infraAverage : getValues(clusterResults, 'infraTotal').average(),
+            totalMin : total.min(),
+            totalMax : total.max(),
+            totalAverage : total.average(),
+            cachMin : cache.min(),
+            cachMax : cache.max(),
+            cachAverage : cache.average(),
+            infraMin : infra.min(),
+            infraMax : infra.max(),
+            infraAverage : infra.average(),
             untrackedAverage : getValues(clusterResults, 'untracked').average(),
             brand : constructedBrands,
             metric : request.query.metric,
