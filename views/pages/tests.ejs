@@ -36,8 +36,9 @@
         <tr>
             <th>Module</th>
             <th>Call index</th>
-            <th>Query total</th>
-            <th>Tractor total</th>
+            <th>Compute total</th>
+            <th>Cache total</th>
+            <th>Gateway + Deserialise</th>
             <th>Untracked</th>
             <th>Total</th>
         </tr>
@@ -45,8 +46,9 @@
             <tr>
                 <td><%= result.module %></td>
                 <td><%= result.index %></td>
-                <td><%= result.qTotal %>ms</td>
-                <td><%= result.tTotal %>ms</td>
+                <td><%= result.compTotal %>ms</td>
+                <td><%= result.cachTotal %>ms</td>
+                <td><%= result.infraTotal %>ms</td>
                 <td><%= result.untracked %>ms</td>
                 <td><%= result.total %>ms</td>
             </tr>
@@ -54,24 +56,34 @@
     </table>
     <table class="floatedTable">
         <tr>
-            <th>Query Min</th>
-            <th>Query Max</th>
-            <th>Query Average</th>
+            <th>Compute Min</th>
+            <th>Compute Max</th>
+            <th>Compute Average</th>
         </tr>
         <tr>
-            <td><%= queryMin %>ms</td>
-            <td><%= queryMax %>ms</td>
-            <td><%= queryAverage %>ms</td>
+            <td><%= compMin %>ms</td>
+            <td><%= compMax %>ms</td>
+            <td><%= compAverage %>ms</td>
         </tr>
         <tr>
-            <th>Tractor Min</th>
-            <th>Tractor Max</th>
-            <th>Tractor Average</th>
+            <th>Cache Min</th>
+            <th>Cache Max</th>
+            <th>Cache Average</th>
         </tr>
         <tr>
-            <td><%= tractorMin %>ms</td>
-            <td><%= tractorMax %>ms</td>
-            <td><%= tractorAverage %>ms</td>
+            <td><%= cachMin %>ms</td>
+            <td><%= cachMax %>ms</td>
+            <td><%= cachAverage %>ms</td>
+        </tr>
+        <tr>
+            <th>Infrastructure Min</th>
+            <th>Infrastructure Max</th>
+            <th>Infrastructure Average</th>
+        </tr>
+        <tr>
+            <td><%= infraMin %>ms</td>
+            <td><%= infraMax %>ms</td>
+            <td><%= infraAverage %>ms</td>
         </tr>
         <tr>
             <th>Total Min</th>

@@ -1,6 +1,7 @@
 var express = require('express');
 var stormpath = require('express-stormpath');
 const https = require('https');
+const http = require('http');
 var config = require('./config/apiKey.json');
 var app = express();
 var async = require('async');
@@ -24,7 +25,7 @@ app.use(stormpath.init(app, {
 }));
  
 app.on('stormpath.ready', function () {
-  //console.log('Stormpath Ready');
+  console.log('Stormpath Ready');
 });
 
 app.get('/dashboard', stormpath.loginRequired, function(req, res) {
@@ -49,18 +50,31 @@ app.get('/createKey', stormpath.loginRequired, function (req, res) {
 });
 
 app.get('/speedTests', stormpath.loginRequired, function (request, response) {
-    var metric = "Spontaneous Consideration - First Mention";
-    var brand = "Southwest";
-    var country = "US";
-    var subgroup = "Southwest System (63%) - Overall"
+
+    var timeFrom = request.param('time_from');
+    var timeTo = request.param('time_to');
+    var noOfModules = request.param('modules');
+    var parrallelCalls = request.param('calls');
+
+
+    var metric = "Participation - always participating with the brand";
+    var brands = ["Air France (Short Haul)", "British Airways (Short Haul)","Iberia (Short Haul)","KLM (Short Haul)","Lufthansa (Short Haul)","Monarch (Short Haul)",
+                 "Norwegian (Short Haul)","Ryanair (Short Haul)","SAS Scandinavian Airlines (Short Haul)","Vueling (Short Haul)","easyJet (Short Haul)", "flybe (Short Haul)", "Aer Lingus (Short Haul)"];
+    var country = "UK";
+    var subgroup = "Total Sample";
     var groupspace = "Airlines";
-    var dates = [["2015-03","2015-04"]];
+    var dates = [[timeFrom, timeTo]];
+    var constructedBrands = "";
+
+    brands.forEach(function(element) {
+      constructedBrands += "[Brand:"+ element +"]"
+    }, this);
 
     var jsonObject = JSON.stringify({
       "time_from": dates[0][0],
       "time_to": dates[0][1],
       "signal": "{Effective Base}{N Weighted}{Unweighted Base}{Weighted Base}",
-      "context": "[Country:"+ country +"][Brand:"+ brand +"][Metric:" + metric + "][Subgroup:" + subgroup +"]"
+      "context": "[Country:"+ country +"]"+ constructedBrands +"[Metric:" + metric + "][Subgroup:" + subgroup +"]"
     });
 
     var postheaders = {
@@ -68,11 +82,16 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       'Content-Length' : Buffer.byteLength(jsonObject, 'utf8')
     };
     var optionsPostList = [];
-    var resultsParrallel = [];
     var modulesResults = [];
-    var modules = [1,2,3,4,5];
+    var modules = [];
+    var clusterResults = [];
 
-    for(var i = 0; i < 10; i++)
+    for(var i = 0; i < noOfModules; i++)
+    {
+        modules.push(i);
+    }
+    
+    for(var i = 0; i < parrallelCalls; i++)
     {
       var optionspost = {
         host : 'api.datashaka.com',
@@ -86,58 +105,104 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
       optionsPostList.push(optionspost);
     }
 
-    // console.info('Options prepared:');
-    // console.info(optionspost);
-    // console.info('Do the POST call');
+    console.info('Options prepared:');
+    console.info(jsonObject);
+    console.info(optionspost);
+    console.info('Do the POST call');
 
     async.each(modules, function (mod, done) {
         async.each(optionsPostList, function (option, done) {
         var start = new Date().getTime();
         console.time("query");
         var reqPost = https.request(option, function (res) {
-          //console.log('statusCode: ' + res.statusCode);
-          //console.log('index: ' + option.index);
+          console.log('statusCode: ' + res.statusCode);
+          console.log('index: ' + option.index);
           res.on('data', function (data) {
+            var end = new Date().getTime();
+            var resultsParrallel = [];
             var body = JSON.parse(data);
+            var instance = "";
 
-            var queryTotal = -1;
-            var tractorTotal = -1;
-            //console.info('POST result:\n');
+            console.info('POST result:\n');
 
             for(var i = 0; i < body.length; i++)
             {
-              if(body[i].context.Event === "Query - Total" && body[i].signal === "Duration"){
-                queryTotal = body[i].value;
+              var computeTotal = -1;
+              var cacheTotal = -1;
+              var infrastructureTotal = -1;
+              var event = body[i].context.Event;
+              var signal = body[i].signal;
+              var value = body[i].value;
+
+              if(event === "Gateway Call" && signal === "Duration"){
+                infrastructureTotal += value;
               }
 
-              if(body[i].context.Event === "Tractor" && body[i].signal === "Duration"){
-                tractorTotal = body[i].value;
+              if(event === "Deserialization" && signal === "Duration"){
+                infrastructureTotal += value
               }
 
-              if(queryTotal >= 0 && tractorTotal >= 0){
+              if(event === "Compute" && signal === "Duration"){
+                computeTotal = value;
+              }
+
+              if(event === "Cache" && body[i].signal === "Duration"){
+                cacheTotal = value;
+              }
+
+              if(body[i].context['Actor Name'])
+              {
+                  instance += "; " + body[i].context.Instance;
+              }
+
+              if(computeTotal >= 0 || cacheTotal >= 0 || infrastructureTotal >= 0){
                 var result = {
                   index : option.index,
-                  qTotal : queryTotal,
-                  tTotal : tractorTotal,
+                  compTotal : computeTotal + 1,
+                  cachTotal : cacheTotal + 1,
+                  infraTotal : infrastructureTotal + 1, 
                   total : 0,
                   module : mod,
                   untracked : 0
                 }
                 resultsParrallel.push(result);
-                //console.log("Array length: " + resultsParrallel.length);
-                queryTotal = -1;
-                tractorTotal = -1;
               }
             }
-            //console.info('\n\nPOST completed');
+            
+            var clusterCallComp = 0;
+            var clusterCallCach = 0;
+            var clusterCallInfra = 0;
+
+            for(var i = 0; i < resultsParrallel.length; i++)
+            {
+                clusterCallComp += resultsParrallel[i].compTotal;
+                clusterCallCach += resultsParrallel[i].cachTotal;
+                clusterCallInfra += resultsParrallel[i].infraTotal;
+            }
+
+            console.log("Real Gateway + Deserialisation: " + clusterCallInfra);
+            console.log("Instances: " + instance);
+            var clusterResult = {
+                index : option.index,
+                compTotal : clusterCallComp,
+                cachTotal : clusterCallCach,
+                infraTotal : clusterCallInfra,
+                total : 0,
+                module : mod,
+                untracked : 0
+            }
+
+            clusterResults.push(clusterResult);
+            
+            console.info('\n\nPOST completed: '+ (end - start));
           });
 
           res.on('end', function () {
             var end = new Date().getTime();
-            var lastResult = resultsParrallel[resultsParrallel.length - 1];
+            var lastResult = clusterResults[clusterResults.length - 1];
             lastResult.total = end - start;
-            lastResult.untracked = lastResult.total - (lastResult.qTotal + lastResult.tTotal);
-            //console.timeEnd("query");
+            lastResult.untracked = lastResult.total - lastResult.infraTotal;
+            console.timeEnd("query");
             done();
           });
         });
@@ -158,18 +223,21 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
     },function (err) {
         if(!err){
           response.render('pages/tests', {
-            renderTheseResults : resultsParrallel,
-            totalMin : getValues(resultsParrallel, 'total').min(),
-            totalMax : getValues(resultsParrallel, 'total').max(),
-            totalAverage : getValues(resultsParrallel, 'total').average(),
-            queryMin : getValues(resultsParrallel, 'qTotal').min(),
-            queryMax : getValues(resultsParrallel, 'qTotal').max(),
-            queryAverage: getValues(resultsParrallel, 'qTotal').average(),
-            tractorMin : getValues(resultsParrallel, 'tTotal').min(),
-            tractorMax : getValues(resultsParrallel, 'tTotal').max(),
-            tractorAverage : getValues(resultsParrallel, 'tTotal').average(),
-            untrackedAverage : getValues(resultsParrallel, 'untracked').average(),
-            brand : brand,
+            renderTheseResults : clusterResults,
+            totalMin : getValues(clusterResults, 'total').min(),
+            totalMax : getValues(clusterResults, 'total').max(),
+            totalAverage : getValues(clusterResults, 'total').average(),
+            compMin : getValues(clusterResults, 'compTotal').min(),
+            compMax : getValues(clusterResults, 'compTotal').max(),
+            compAverage: getValues(clusterResults, 'compTotal').average(),
+            cachMin : getValues(clusterResults, 'cachTotal').min(),
+            cachMax : getValues(clusterResults, 'cachTotal').max(),
+            cachAverage : getValues(clusterResults, 'cachTotal').average(),
+            infraMin : getValues(clusterResults, 'infraTotal').min(),
+            infraMax : getValues(clusterResults, 'infraTotal').max(),
+            infraAverage : getValues(clusterResults, 'infraTotal').average(),
+            untrackedAverage : getValues(clusterResults, 'untracked').average(),
+            brand : constructedBrands,
             metric : metric,
             groupspace : groupspace,
             startDate : dates[0][0],
