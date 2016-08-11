@@ -51,19 +51,40 @@ app.get('/createKey', stormpath.loginRequired, function (req, res) {
 
 app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
+    try{
+      var mm = request.query.token
+      if((request.query.token === "") || (typeof request.query.token === "undefined")) throw "Empty token";
+    }
+    catch(err){
+      response.send("No token specified");
+    }
+
     var listOfBrands = request.query.brands.split(';');
+    var listOfMetrics = request.query.metrics.split(';');
     var dates = [[request.query.time_from, request.query.time_to]];
     var constructedBrands = "";
+    var constructedMetrics = "";
 
     listOfBrands.forEach(function(element) {
-      constructedBrands += "[Brand:"+ element +"]"
+      constructedBrands += "[Brand:"+ element +"]";
+    }, this);
+
+    listOfMetrics.forEach(function(element){
+      constructedMetrics += "[Metric:"+ element +"]";
     }, this);
 
     var jsonObject = JSON.stringify({
       "time_from": dates[0][0],
       "time_to": dates[0][1],
       "signal": "{Effective Base}{N Weighted}{Unweighted Base}{Weighted Base}",
-      "context": "[Country:"+ request.query.country +"]"+ constructedBrands +"[Metric:" + request.query.metric + "][Subgroup:" + request.query.subgroup +"]"
+      "context": "[Country:"+ request.query.country +"]"+ constructedBrands + constructedMetrics + "[Subgroup:" + request.query.subgroup +"]",
+      "tractors": [
+        "crop [Brand][Metric] ~> filter {Weighted Base}{N Weighted} ~> group by week ~> pad time ~> roll by 8 last ~> sum ~> calculate '{N Weighted}/{Weighted Base}' returns {Category Average} ~> crop [Metric] ~> average",
+        "crop [Brand][Metric] ~> group by week ~> pad time ~> roll by 8 last ~> sum ~> calculate 'Round({N Weighted}/{Weighted Base}, 2)' includes {N Value} ~> replace {Unweighted Base} with {Sample Size}",
+        "crop [Brand][Metric] ~> filter {Weighted Base}{N Weighted} ~> group by week ~> pad time ~> roll by 8 last ~> sum ~> calculate 'Round({N Weighted}/{Weighted Base}, 2)' returns {N Value} ~> rank olympic [Brand] ~> replace {N Value Rank by Brand} with {Rank} ~> filter {Rank}",
+        "crop [Metric] ~> filter {Effective Base} ~> group by week ~> pad time ~> roll by 8 last ~> sum ~> replace {Effective Base} with {Effective Base Category Total}"
+      ],
+      "tractor": "sort by time"
     });
 
     var postheaders = {
