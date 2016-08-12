@@ -41,8 +41,8 @@
         <tr>
             <th>Module</th>
             <th>Call index</th>
-            <th>Max of <br/> KatsuFilteredQueryActor</th>
             <th>Max of <br/> KatsuTractoredFilteredQueryActor</th>
+            <th>Max of <br/> KatsuFilteredQueryActor</th>
             <th>Max of <br/> KatsuSingleFilteredQueryActor</th>
             <th>Max of <br/> KatsuTractorActor</th>
             <th>Cache total</th>
@@ -55,8 +55,8 @@
             <tr>
                 <td><%= result.module %></td>
                 <td><%= result.index %></td>
-                <td class=<% if(result.filteredQueryActorMax > 0) { %> over <% } %>><%= result.filteredQueryActorMax %>ms</td>
                 <td class=<% if(result.tractoredFilteredQueryActorMax > 0) { %> over <% } %>><%= result.tractoredFilteredQueryActorMax %>ms</td>
+                <td class=<% if(result.filteredQueryActorMax > 0) { %> over <% } %>><%= result.filteredQueryActorMax %>ms</td>
                 <td class=<% if(result.singleFilteredQueryActorMax > 0) { %> over <% } %>><%= result.singleFilteredQueryActorMax %>ms</td>
                 <td class=<% if(result.tractorActorMax > 0) { %> over <% } %>><%= result.tractorActorMax %>ms</td>
                 <td><%= result.cachTotal %>ms</td>

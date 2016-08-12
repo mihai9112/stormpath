@@ -130,12 +130,18 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
           res.on('data', function (data) {
             var end = new Date().getTime();
             var resultsParrallel = [];
-            var computeOfKatsuSingleFilteredQueryActor = [];
-            var computeOfKatsuTractorActor = [];
-            var computeOfKatsuTractoredFilteredQueryActor = [];
+            var maxOfActors = [];
             var computeOfKatsuFilteredQueryActor = [];
+            var valuesOfKatsuFilteredQueryActor = [];
+            var computeOfKatsuSingleFilteredQueryActor = [];
+            var valuesOfKatsuSingleFilteredQueryActor = [];
+            var computeOfKatsuTractorActor = [];
+            var valuesOfKatsuTractorActor = [];
+            var computeOfKatsuTractoredFilteredQueryActor = [];
+            var valuesOfKatsuTractoredFilteredQueryActor = [];
             var body = JSON.parse(data);
             var instance = "";
+            var nodeCount = 0;
 
             console.info('POST result:\n');
 
@@ -166,23 +172,37 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
               if(body[i].context['Actor Name']){
                   instance += body[i].context.Instance + "; ";
-              }
 
-              if(body[i].context['Actor Name'] === "KatsuFilteredQueryActor"){
-                  computeOfKatsuFilteredQueryActor.push(value);
-              }
-
-              if(body[i].context['Actor Name'] === "KatsuTractoredFilteredQueryActor"){
-                  computeOfKatsuTractoredFilteredQueryActor.push(value);
-              }
-
-              var actorName = body[i].context['Actor Name']; 
-              if(body[i].context['Actor Name'] === "KatsuSingleFilteredQueryActor"){
-                  computeOfKatsuSingleFilteredQueryActor.push(value);
-              }
-
-              if(body[i].context['Actor Name'] === "KatsuTractorActor"){
-                  computeOfKatsuTractorActor.push(value);
+                  switch(body[i].context['Actor Name']){
+                      case "KatsuFilteredQueryActor" :
+                          valuesOfKatsuFilteredQueryActor.push(value);
+                          if(valuesOfKatsuFilteredQueryActor.length == 3){
+                              computeOfKatsuFilteredQueryActor.push(valuesOfKatsuFilteredQueryActor.max());
+                              valuesOfKatsuFilteredQueryActor = [];
+                          }
+                          break;
+                      case "KatsuTractoredFilteredQueryActor" :
+                          valuesOfKatsuTractoredFilteredQueryActor.push(value);
+                          if(valuesOfKatsuTractoredFilteredQueryActor.length == 3){
+                              computeOfKatsuTractoredFilteredQueryActor.push(valuesOfKatsuTractoredFilteredQueryActor.max());
+                              valuesOfKatsuTractoredFilteredQueryActor = [];
+                          }
+                          break;
+                      case "KatsuSingleFilteredQueryActor" :
+                          valuesOfKatsuSingleFilteredQueryActor.push(value);
+                          if(valuesOfKatsuSingleFilteredQueryActor.length == 3){
+                              computeOfKatsuSingleFilteredQueryActor.push(valuesOfKatsuSingleFilteredQueryActor.max());
+                              valuesOfKatsuSingleFilteredQueryActor = [];
+                          }
+                          break;
+                      case "KatsuTractorActor" :
+                          valuesOfKatsuTractorActor.push(value);
+                          if(valuesOfKatsuTractorActor.length == 3){
+                            computeOfKatsuTractorActor.push(valuesOfKatsuTractorActor.max());
+                            valuesOfKatsuTractorActor = [];
+                          } 
+                          break;
+                  }   
               }
 
               if(computeTotal >= 0 || cacheTotal >= 0 || infrastructureTotal >= 0){
@@ -198,6 +218,22 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
                 resultsParrallel.push(result);
               }
             }
+
+            if(valuesOfKatsuFilteredQueryActor.length > 0){
+                computeOfKatsuFilteredQueryActor.push(valuesOfKatsuFilteredQueryActor.max());
+            }
+
+            if(valuesOfKatsuTractoredFilteredQueryActor.length > 0){
+                computeOfKatsuTractoredFilteredQueryActor.push(valuesOfKatsuTractoredFilteredQueryActor.max());
+            }
+
+            if(valuesOfKatsuSingleFilteredQueryActor.length > 0){
+                computeOfKatsuSingleFilteredQueryActor.push(valuesOfKatsuSingleFilteredQueryActor.max());
+            }
+
+            if(valuesOfKatsuTractorActor.length > 0){
+                computeOfKatsuTractorActor.push(valuesOfKatsuTractorActor.max());
+            }
             
             var clusterCallCach = 0;
             var clusterCallInfra = 0;
@@ -210,10 +246,10 @@ app.get('/speedTests', stormpath.loginRequired, function (request, response) {
 
             var clusterResult = {
                 index : option.index,
-                filteredQueryActorMax : (computeOfKatsuFilteredQueryActor.length > 0) ? computeOfKatsuFilteredQueryActor.max() : 0,
-                singleFilteredQueryActorMax :  (computeOfKatsuSingleFilteredQueryActor.length > 0 ) ? computeOfKatsuSingleFilteredQueryActor.max() : 0,
-                tractorActorMax : (computeOfKatsuTractorActor.length > 0) ? computeOfKatsuTractorActor.max() : 0,
-                tractoredFilteredQueryActorMax : (computeOfKatsuTractoredFilteredQueryActor.length > 0) ? computeOfKatsuTractoredFilteredQueryActor.max() : 0,
+                filteredQueryActorMax : computeOfKatsuFilteredQueryActor.sum(),
+                singleFilteredQueryActorMax :  computeOfKatsuSingleFilteredQueryActor.sum(),
+                tractorActorMax : computeOfKatsuTractorActor.sum(),
+                tractoredFilteredQueryActorMax : computeOfKatsuTractoredFilteredQueryActor.sum(),
                 cachTotal : clusterCallCach,
                 infraTotal : clusterCallInfra,
                 total : 0,
@@ -294,6 +330,13 @@ Array.prototype.average = function() {
         return result + currentValue
     }, 0);
     return sum / this.length;
+};
+
+Array.prototype.sum = function(){
+    var sum = this.reduce(function(result, currentValue){
+        return result + currentValue
+    }, 0);
+    return sum;
 };
 
 function getValues(objectsArray, valuePropName) {
